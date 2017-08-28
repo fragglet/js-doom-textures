@@ -1,0 +1,44 @@
+<html>
+<head>
+  <title> Texture viewer </title>
+  <style>
+    body {
+      margin: 0;
+    }
+    canvas {
+      margin: 1px;
+    }
+    .top-bar {
+      position: fixed;
+      top: 0;
+      width: 100%;
+      background-color: black;
+      text-align: center;
+      font-family: sans-serif;
+      font-weight: bold;
+      color: lightgrey;
+      padding: 5px;
+    }
+    .top-bar a {
+      color: lightgrey;
+    }
+    #texture-list {
+      margin-top: 2em;
+      margin-left: 5px;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+<div class="top-bar">
+  <a href="?game=heretic">Heretic</a> |
+  <a href="?game=doom1">Doom</a> |
+  <a href="?game=doom2">Doom II</a>
+</div>
+<div id="texture-list">
+</div>
+<script language="javascript" src="texture.js">
+</script>
+</body>
+</html>
+
