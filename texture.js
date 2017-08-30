@@ -1,9 +1,13 @@
 
+// Regexps for parsing contents of deutex-format texture definition files.
 EMPTY_RE = /^\s*$/;
 COMMENT_RE = /^\s*;/;
 TEXTURE_RE = /^\s*([A-Za-z0-9_-]+)\s*(-?[0-9]+)\s*(-?[0-9]+)/;
 PATCH_RE = /^\s*\*\s*([A-Za-z0-9_-]+)\s*(-?[0-9]+)\s*(-?[0-9]+)/;
 
+// PatchesStore implements a class that will load patches on demand from a
+// specified URL, creating them as <img> tags in a hidden <div> so that they
+// can be composited into a full texture.
 class PatchesStore {
 	constructor(rootPath, extension) {
 		this.patches = {};
@@ -17,6 +21,8 @@ class PatchesStore {
 		document.body.appendChild(this.container);
 	}
 
+	// loadPatch loads the given patch by name, creating an <img> tag
+	// for it if necessary.
 	loadPatch(name) {
 		name = name.toLowerCase();
 		if (name in this.patches) {
@@ -35,6 +41,8 @@ class PatchesStore {
 		this.patches[name] = img;
 	}
 
+	// getPatch returns an <img> tag for the given patch. The patch must
+	// have already have been loaded using loadPatch().
 	getPatch(name) {
 		name = name.toLowerCase();
 		if (name in this.patches) {
@@ -50,6 +58,9 @@ class PatchesStore {
 		}
 	}
 
+	// loadAllPatches invokes loadPatch() for every patch referenced
+	// in the given list of Texture objects, invoking the specified
+	// callback when they have all been loaded.
 	loadAllPatches(textures, callback) {
 		var ps = this;
 		ps.onload = function() {
@@ -66,6 +77,7 @@ class PatchesStore {
 	}
 }
 
+// Patch represents a single patch inside a texture entry.
 class Patch {
 	constructor(name, x, y) {
 		this.name = name;
@@ -78,6 +90,7 @@ class Patch {
 	}
 }
 
+// Texture represents a texture inside the TEXTUREx lump.
 class Texture {
 	constructor(name, width, height) {
 		this.name = name;
@@ -95,6 +108,9 @@ class Texture {
 		return hdr + "\n" + this.patches.join("\n");
 	}
 
+	// drawTexture renders the texture into a full <canvas> element which
+	// is returned to the caller. A PatchesStore must be passed containing
+	// all necessary patches.
 	drawTexture(ps) {
 		var canvas = document.createElement("canvas");
 		canvas.setAttribute("width", this.width);
@@ -110,6 +126,8 @@ class Texture {
 	}
 }
 
+// parseTextures parses the contents of a deutex-format texture definition
+// file. Returned is an array of Texture objects.
 function parseTextures(config) {
 	var lines = config.split("\n");
 	var i;
@@ -142,6 +160,9 @@ function parseTextures(config) {
 	return textures;
 }
 
+// loadTexturesFile loads and parses a deutex-format texture definition file
+// from the given URL. The provided callback is invoked with the list of
+// textures from the file.
 function loadTexturesFile(url, callback) {
 	console.log("load textures from " + url);
 	var url;
@@ -160,6 +181,9 @@ function loadTexturesFile(url, callback) {
 	xhr.send();
 }
 
+// loadAllTextures loads deutex-format texture definition files from the given
+// array of URLs. The textures are all concatenated together, and the provided
+// callback is then invoked with the complete list.
 function loadAllTextures(urls, callback) {
 	var waitingTextures = urls.length;
 	var allTextures = [];
@@ -175,6 +199,14 @@ function loadAllTextures(urls, callback) {
 	}
 }
 
+// renderAllTextures populates the given HTML element with <canvas> elements
+// for all textures for the given game. It is expected that there exist
+// directories in the following format:
+//    <game>/textures/texture[12].txt
+//       - Texture definition files, which will be loaded and parsed.
+//         Both TEXTURE1 and TEXTURE2 are expected, except for 'doom2'.
+//    <game>/patches/<patch name>.png
+//       - Individual PNG patch files to composite into textures.
 function renderAllTextures(element, game) {
 	var ps = new PatchesStore(game + "/patches", ".png");
 	urls = [game + "/textures/texture1.txt"];
@@ -196,6 +228,8 @@ function renderAllTextures(element, game) {
 	});
 }
 
+// getGame looks for a URL parameter in the loaded page specifying which game
+// to render textures for; if none exists then 'doom1' is the default.
 function getGame() {
 	var u = new URL(window.location.href);
 	var game = u.searchParams.get("game");
